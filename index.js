@@ -10,6 +10,7 @@ let data;
 // check config file exists
 fs.stat( channel_config_file )
 	.catch( ( error ) => {
+		console.log( "no config file, creating" )
 		// create if it doesn't
 		fs.writeFile( channel_config_file, JSON.stringify( app.default_data_config ), "utf8" );
 	})
@@ -18,7 +19,11 @@ fs.stat( channel_config_file )
 		return fs.readFile( channel_config_file, "utf8" );
 	})
 	.then( ( json ) => {
-		// parse config file
+		// parse the config file
+		if ( ! json ) {
+			console.log( "no json, using config" )
+			return app.default_data_config;
+		}
 		return JSON.parse( json );
 	})
 	.then( ( parsed_data ) => {
@@ -27,10 +32,12 @@ fs.stat( channel_config_file )
 		return app.getChannels( data.channels );
 	})
 	.then( ( channel_data ) => {
+		console.log( "channel_data", channel_data )
 		return app.parseChannelData( data, channel_data );
 	})
 	.then( ( updated_channel_data ) => {
-		//data.channels = updated_channel_data;
+		console.log( "updated_channel_data", updated_channel_data )
+		console.log( "data", data )
 		return fs.writeFile( channel_config_file, JSON.stringify( data ), "utf8" );
 	})
 	.then( () => {

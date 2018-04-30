@@ -58,8 +58,13 @@ function processQueue() {
 }
 
 function getChannels( channels ) {
+	console.log( "getChannels", channels );
 
 	return new Promise( ( resolve, reject ) => {
+
+		if ( ! channels.length ) {
+			return resolve( [] );
+		}
 
 		let data = Array( channels.length ).fill( {} );
 		let remaining = channels.length;
@@ -71,6 +76,7 @@ function getChannels( channels ) {
 				! channel.enabled ||
 				channel.last_update > ( +new Date() - channel.update_interval )
 			) {
+				console.log( "channel.last_update > ( +new Date() - channel.update_interval )", channel.last_update - ( +new Date() - channel.update_interval ) );
 				console.log( "Skipping Channel:", channel.name );
 				if ( --remaining < 1 )
 					return resolve( data );
@@ -128,8 +134,12 @@ function parseChannelData( data, channel_data ) {
 
 		let channel = channels[ index ];
 
+		console.log( "channel", channel.name );
+		console.log( "this_channel", this_channel );
+
 		// error while retrieving channel from twitch
 		if ( this_channel.error ) {
+			console.log( "channel a" );
 			channel.error = true;
 			channel.last_error = channel.error_data;
 			channel.consecutive_errors++;
@@ -137,6 +147,7 @@ function parseChannelData( data, channel_data ) {
 		}
 		// channel found, and is currently streaming
 		else if ( this_channel.stream ) {
+			console.log( "channel b" );
 			channel.error = false;
 			channel.last_error = channel.error_data;
 			channel.consecutive_errors = 0;
@@ -156,8 +167,13 @@ function parseChannelData( data, channel_data ) {
 				game: game_id,
 			});
 		}
+		// channel was skipped
+		else if ( ! Object.keys( this_channel ).length ) {
+			console.log( "channel c" );
+		}
 		// channel found, and is not currently streaming
 		else {
+			console.log( "channel d" );
 			channel.error = false;
 			channel.last_error = channel.error_data;
 			channel.consecutive_errors = 0;

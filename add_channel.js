@@ -15,17 +15,23 @@ if ( process.argv.length < 3 ) {
 // check config file exists
 fs.stat( channel_config_file )
 	.catch( ( error ) => {
+		console.log( "no config file, creating" )
 		// create if it doesn't
 		fs.writeFile( channel_config_file, JSON.stringify( app.default_data_config ), "utf8" );
 	})
 	.then( () => {
+		console.log( "reading config file" )
 		// get the config file
 		return fs.readFile( channel_config_file, "utf8" );
 	})
 	.then( ( json ) => {
 		// parse the config file
-		if ( ! json )
+		console.log( "json", json )
+		if ( ! json ) {
+			console.log( "no json, using config" )
 			return app.default_data_config;
+		}
+		console.log( "using json" )
 		return JSON.parse( json );
 	})
 	.then( ( data ) => {
