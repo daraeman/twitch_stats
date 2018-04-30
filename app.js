@@ -1,5 +1,7 @@
 const fs = require( "fs-extra" );
 const axios = require( "axios" );
+const path = require( "path" );
+const app = require( "./app" );
 require( "dotenv" ).config();
 const twitchRequest = axios.create({
 	baseURL: "https://api.twitch.tv/kraken/streams/",
@@ -18,9 +20,14 @@ const default_channel_config = {
 	error: false,
 	last_error: null,
 	consecutive_errors: 0,
+};
+const default_channel_data = {
 	streaming: [],
 };
-
+const paths = {
+	config: path.resolve( "data", "app" ),
+	data: path.resolve( "data", "channels" ),
+};
 let queue = [];
 let queue_running = false;
 let queue_throttle = ( 2.1 * 1000 );
@@ -132,6 +139,12 @@ function parseChannelData( data, channel_data ) {
 
 	channel_data.forEach( ( this_channel, index ) => {
 
+		// channel was skipped
+		if ( ! Object.keys( this_channel ).length ) {
+			console.log( "channel skipped" );
+			return;
+		}
+
 		let channel = channels[ index ];
 
 		console.log( "channel", channel.name );
@@ -162,14 +175,22 @@ function parseChannelData( data, channel_data ) {
 				game_id = getGame( games, this_channel.stream.game );
 			}
 
-			channel.streaming.push({
-				time: +new Date(),
-				game: game_id,
-			});
-		}
-		// channel was skipped
-		else if ( ! Object.keys( this_channel ).length ) {
-			console.log( "channel c" );
+			getChannelData( channel.name )
+				.then( ( channel_data ) => {
+
+					console.log( "channel_data", channel_data )
+
+					channel_data = JSON.parse( channel_data );
+
+					console.log( "channel_data", channel_data )
+
+					channel_data.streaming.push({
+						time: +new Date(),
+						game: game_id,
+					});
+
+					return saveChannelData( channel.name, channel_data );
+				});
 		}
 		// channel found, and is not currently streaming
 		else {
@@ -179,7 +200,6 @@ function parseChannelData( data, channel_data ) {
 			channel.consecutive_errors = 0;
 			channel.last_update = +new Date();
 		}
-
 	});
 
 	data.channels = channels;
@@ -205,9 +225,26 @@ function addGame( games, game_name ) {
 	games.push( game_name );
 
 	return games;
-
 }
 
+function channelDataPath( channel_name ) {
+	return path.resolve( paths.data, channel_name + ".json" );
+}
+
+function configPath() {
+	return path.resolve( paths.config, "channels.json" );
+}
+
+function saveChannelData( channel_name, data ) {
+	console.log( "channelDataPath( channel_name )", channelDataPath( channel_name ) )
+	return fs.writeFile( channelDataPath( channel_name ), JSON.stringify( data ), "utf8" );
+}
+
+function getChannelData( channel_name ) {
+	return fs.readFile( channelDataPath( channel_name ), "utf8" );
+}
+
+/* - - - - - Exports - - - - - */
 
 module.exports = {
 	getChannels: getChannels,
@@ -215,4 +252,10 @@ module.exports = {
 	getGame: getGame,
 	default_data_config: default_data_config,
 	default_channel_config: default_channel_config,
+	default_channel_data: default_channel_data,
+	channelDataPath: channelDataPath,
+	configPath: configPath,
+	default_channel_data: default_channel_data,
+	saveChannelData: saveChannelData,
+	getChannelData: getChannelData,
 };

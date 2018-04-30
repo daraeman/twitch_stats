@@ -1,11 +1,10 @@
 const fs = require( "fs-extra" );
-const path = require( "path" );
-const paths = {
-	config: path.resolve( "data", "app" ),
-};
-const channel_config_file = path.resolve( paths.config, "channels.js" );
 const app = require( "./app" );
+const channel_config_file = app.configPath();
 const new_channel_name = process.argv[2];
+console.log( "new_channel_name", new_channel_name )
+const channel_data_path = app.channelDataPath( new_channel_name );
+console.log( "channel_data_path", channel_data_path )
 
 if ( process.argv.length < 3 ) {
 	console.log( "Please enter a channel name to add." );
@@ -45,6 +44,13 @@ fs.stat( channel_config_file )
 	})
 	.then( ( data ) => {
 		return fs.writeFile( channel_config_file, JSON.stringify( data ), "utf8" );
+	})
+	.then( () => {
+		return fs.stat( channel_data_path );
+	})
+	.catch( ( error ) => {
+		console.log( "creating channel data file" );
+		return fs.writeFile( channel_data_path, JSON.stringify( app.default_channel_data ), "utf8" );
 	})
 	.then( () => {
 		console.log( "Done" );

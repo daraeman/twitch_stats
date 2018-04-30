@@ -1,10 +1,6 @@
 const fs = require( "fs-extra" );
-const path = require( "path" );
 const app = require( "./app" );
-const paths = {
-	config: path.resolve( "data", "app" ),
-};
-const channel_config_file = path.resolve( paths.config, "channels.js" );
+const channel_config_file = app.configPath();
 
 let data;
 // check config file exists
