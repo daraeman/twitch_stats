@@ -179,15 +179,12 @@ function parseChannelData( data, channel_data ) {
 			getChannelData( channel.name )
 				.then( ( channel_data ) => {
 
-					console.log( "channel_data", channel_data )
-
 					channel_data = JSON.parse( channel_data );
-
-					console.log( "channel_data", channel_data )
 
 					channel_data.streaming.push({
 						time: +new Date(),
 						game: game_id,
+						viewers: this_channel.stream.viewers,
 					});
 
 					return saveChannelData( channel.name, channel_data );
@@ -306,4 +303,5 @@ module.exports = {
 	saveChannelData: saveChannelData,
 	getChannelData: getChannelData,
 	getConfig: getConfig,
+	paths: paths,
 };
