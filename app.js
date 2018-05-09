@@ -30,6 +30,7 @@ const paths = {
 };
 let queue = [];
 let queue_running = false;
+// api rate limit is 30 requests per minute
 let queue_throttle = ( 2.1 * 1000 );
 let last_queue_time = 0;
 
@@ -178,15 +179,12 @@ function parseChannelData( data, channel_data ) {
 			getChannelData( channel.name )
 				.then( ( channel_data ) => {
 
-					console.log( "channel_data", channel_data )
-
 					channel_data = JSON.parse( channel_data );
-
-					console.log( "channel_data", channel_data )
 
 					channel_data.streaming.push({
 						time: +new Date(),
 						game: game_id,
+						viewers: this_channel.stream.viewers,
 					});
 
 					return saveChannelData( channel.name, channel_data );
@@ -244,6 +242,52 @@ function getChannelData( channel_name ) {
 	return fs.readFile( channelDataPath( channel_name ), "utf8" );
 }
 
+function getConfig() {
+
+	return new Promise( ( resolve, reject ) => {
+
+		let path = configPath();
+
+		fs.stat( path )
+			.catch( ( error ) => {
+				console.log( "no config file, creating" )
+				// create if it doesn't
+				fs.writeFile( path, JSON.stringify( default_data_config ), "utf8" );
+			})
+			.then( () => {
+				// get the config file
+				return fs.readFile( path, "utf8" );
+			})
+			.then( ( json ) => {
+				// parse the config file
+				if ( ! json ) {
+					console.log( "no json, using config" )
+					return default_data_config;
+				}
+				return JSON.parse( json );
+			})
+			.then( ( parsed_data ) => {
+				data = parsed_data;
+			});
+
+	});
+}
+
+function getConfig() {
+	return new Promise( ( resolve, reject ) => {
+
+		fs.readFile( configPath(), "utf8" )
+			.then( ( json ) => {
+				if ( ! json )
+					return app.default_data_config;
+				return JSON.parse( json );
+			})
+			.then( ( data ) => {
+				return resolve( data );
+			});
+	});
+}
+
 /* - - - - - Exports - - - - - */
 
 module.exports = {
@@ -258,4 +302,6 @@ module.exports = {
 	default_channel_data: default_channel_data,
 	saveChannelData: saveChannelData,
 	getChannelData: getChannelData,
+	getConfig: getConfig,
+	paths: paths,
 };

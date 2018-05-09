@@ -1,0 +1,56 @@
+<!doctype html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width,initial-scale=1.0">
+	<title></title>
+	<link href="" rel="stylesheet">
+	<style>
+
+		.axis--x path {
+			display: none;
+		}
+
+		.line {
+			fill: none;
+			stroke: steelblue;
+			stroke-width: 1.5px;
+		}
+
+		.inline_list li {
+			display: inline-block;
+		}
+
+		.border li {
+			border: 1px solid rgb( 200,200,200 );
+			border-radius: 4px;
+			padding: 1px 3px 0px;
+		}
+
+	</style>
+</head>
+<body>
+
+	<div>
+		<a href="/">&lt;- channel list</a>
+	</div>
+
+	<br>
+
+	<div>
+		{{ name }} - {{ total }} hours
+	</div>
+
+	<ul class="inline_list border">
+		{{#each hours}}
+			<li>{{ hour }}: {{ amount }}</li>
+		{{/each}}
+	</ul>
+
+	<ul>
+		{{#each blocks}}
+			<li>{{ start }} - {{ duration }} - {{ game }}</li>
+		{{/each}}
+	</ul>
+
+</html>
