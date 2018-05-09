@@ -17,6 +17,16 @@
 			stroke-width: 1.5px;
 		}
 
+		.inline_list li {
+			display: inline-block;
+		}
+
+		.border li {
+			border: 1px solid rgb( 200,200,200 );
+			border-radius: 4px;
+			padding: 1px 3px 0px;
+		}
+
 	</style>
 </head>
 <body>
@@ -28,14 +38,19 @@
 	<br>
 
 	<div>
-		{{ name }}
+		{{ name }} - {{ total }} hours
 	</div>
+
+	<ul class="inline_list border">
+		{{#each hours}}
+			<li>{{ hour }}: {{ amount }}</li>
+		{{/each}}
+	</ul>
 
 	<ul>
 		{{#each blocks}}
 			<li>{{ start }} - {{ duration }} - {{ game }}</li>
 		{{/each}}
 	</ul>
-
 
 </html>

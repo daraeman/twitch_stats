@@ -4,7 +4,8 @@ const path = require( "path" );
 const handlebars = require( "express-handlebars" );
 require( "dotenv" ).config();
 const Stream = require( "./app" );
-const moment = require( "moment" );
+//const moment = require( "moment" );
+const moment = require( "moment-timezone" );
 
 app.engine( "handlebars", handlebars() );
 app.set( "view engine", "handlebars" );
@@ -48,8 +49,24 @@ app.get( "/channel/:name", ( request, response ) => {
 
 			let data = JSON.parse( channel_data );
 			let last_time = 0;
+			// blocks of time for each stream
 			let blocks = [];
 			let this_block = Object.assign( {}, block_template );
+			// 24 hours
+			let hours = Array(24).fill({}).map( ( obj, index ) => {
+
+				let hour = index;
+				if ( index === 0 )
+					hour = 12;
+				else if ( index > 11 )
+					hour -= 12;
+
+				return {
+					hour: hour,
+					amount: 0,
+				};
+			});
+			console.log( "hours", hours )
 			data.streaming.forEach( ( stream, index ) => {
 
 				// game changed or stream block is different                               
@@ -59,6 +76,13 @@ app.get( "/channel/:name", ( request, response ) => {
 					this_block = Object.assign( {}, block_template );
 					this_block.start = stream.time;
 					this_block.game = stream.game;
+					// if the hour is not the same as the last time hour ( and the last time hour is not the same day )
+					if (
+						moment( last_time ).tz( "America/Los_Angeles" ).hour() !== moment( stream.time ).tz( "America/Los_Angeles" ).hour() || 
+						last_time < ( stream.time - ( 60 * 60 * 1000 ) )
+					) {
+						hours[ moment( stream.time ).tz( "America/Los_Angeles" ).hour() ].amount++;
+					}
 				}
 				// same stream
 				else {
@@ -66,6 +90,13 @@ app.get( "/channel/:name", ( request, response ) => {
 					if ( ! this_block.start ) {
 						this_block.start = stream.time;
 						this_block.game = stream.game;
+					}
+
+					if (
+						moment( last_time ).tz( "America/Los_Angeles" ).hour() !== moment( stream.time ).tz( "America/Los_Angeles" ).hour() || 
+						last_time < ( stream.time - ( 60 * 60 * 1000 ) )
+					) {
+						hours[ moment( stream.time ).tz( "America/Los_Angeles" ).hour() ].amount++;
 					}
 
 					if ( ( index + 1 ) === data.streaming.length ) {
@@ -78,9 +109,13 @@ app.get( "/channel/:name", ( request, response ) => {
 				last_time = stream.time;
 			});
 
+			console.log( "hours", hours )
+
+			let total = 0;
 			blocks = blocks.map( ( block ) => {
 				block.duration = ( ( block.end - block.start ) / 1000 / 60 / 60 ).toFixed( 2 ) + " hours";
-				block.start = moment( block.start, "x" ).format( "ddd MMMM Do, YYYY" );
+				total += ( ( block.end - block.start ) / 1000 / 60 / 60 )
+				block.start = moment( block.start, "x" ).tz( "America/Los_Angeles" ).format( "ddd MMMM Do, YYYY ha" );
 				block.game = games[ block.game ];
 				return block;
 			});
@@ -88,6 +123,8 @@ app.get( "/channel/:name", ( request, response ) => {
 			return response.render( "channel_view", {
 				name: name,
 				blocks: blocks,
+				hours: hours,
+				total: total.toFixed( 2 ),
 			});
 
 		});
